@@ -6,3 +6,4 @@ lib/
 .env.local
 coverage/
 .nyc_output/
+licenses.txt
