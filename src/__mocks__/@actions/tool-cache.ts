@@ -1,0 +1,6 @@
+export const downloadTool = jest.fn()
+export const extractZip = jest.fn()
+export const extractTar = jest.fn()
+export const cacheDir = jest.fn()
+export const restoreCache = jest.fn()
+export const saveCache = jest.fn()

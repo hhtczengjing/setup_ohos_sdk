@@ -1,0 +1,86 @@
+name: Test Action
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test-action:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test setup-ohos-sdk with latest version
+        id: setup-latest
+        uses: ./
+        # No version specified - will use latest
+
+      - name: Verify environment variables (latest)
+        run: |
+          echo "COMMANDLINE_TOOLS_VERSION=$COMMANDLINE_TOOLS_VERSION"
+          echo "COMMANDLINE_TOOL_DIR=$COMMANDLINE_TOOL_DIR"
+          echo "HOS_SDK_HOME=$HOS_SDK_HOME"
+          echo "HDC_HOME=$HDC_HOME"
+          echo "NODE_HOME=$NODE_HOME"
+
+      - name: Verify outputs (latest)
+        run: |
+          echo "command-line-tools-path: ${{ steps.setup-latest.outputs.command-line-tools-path }}"
+          echo "sdk-home: ${{ steps.setup-latest.outputs.sdk-home }}"
+          echo "hdc-home: ${{ steps.setup-latest.outputs.hdc-home }}"
+
+  test-specific-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test setup-ohos-sdk with specific version
+        id: setup-specific
+        uses: ./
+        with:
+          version: '5.0.11.100'
+
+      - name: Verify SDK installation
+        run: |
+          echo "SDK Version: ${{ env.COMMANDLINE_TOOLS_VERSION }}"
+          if [ ! -d "${{ env.COMMANDLINE_TOOL_DIR }}" ]; then
+            echo "ERROR: SDK directory does not exist!"
+            exit 1
+          fi
+          echo "✓ SDK directory verified"
+
+  test-outputs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SDK
+        id: sdk
+        uses: ./
+
+      - name: Test outputs
+        run: |
+          # Verify outputs are not empty
+          if [ -z "${{ steps.sdk.outputs.command-line-tools-path }}" ]; then
+            echo "ERROR: command-line-tools-path output is empty"
+            exit 1
+          fi
+          if [ -z "${{ steps.sdk.outputs.sdk-home }}" ]; then
+            echo "ERROR: sdk-home output is empty"
+            exit 1
+          fi
+          if [ -z "${{ steps.sdk.outputs.hdc-home }}" ]; then
+            echo "ERROR: hdc-home output is empty"
+            exit 1
+          fi
+          echo "✓ All outputs verified"

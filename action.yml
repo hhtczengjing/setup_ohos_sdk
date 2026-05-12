@@ -1,0 +1,21 @@
+name: 'Setup HarmonyOS Next SDK'
+description: 'Set up HarmonyOS Next command-line tools with version management'
+author: 'Your Organization'
+
+inputs:
+  version:
+    description: 'HarmonyOS Next SDK version (e.g., 5.0.11.100). If not specified, uses the latest version.'
+    required: false
+    default: ''
+
+outputs:
+  command-line-tools-path:
+    description: 'The path to the command-line tools directory'
+  sdk-home:
+    description: 'The path to HOS_SDK_HOME'
+  hdc-home:
+    description: 'The path to HDC tools directory'
+
+runs:
+  using: 'node20'
+  main: 'dist/main.js'

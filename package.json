@@ -1,0 +1,42 @@
+{
+  "name": "setup-ohos-sdk",
+  "version": "1.0.0",
+  "description": "GitHub Action to set up HarmonyOS Next SDK (command-line tools)",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && cp -r lib/* dist/",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hhtczengjing/setup-ohos-sdk"
+  },
+  "keywords": [
+    "harmonyos",
+    "ohos",
+    "sdk",
+    "setup",
+    "github-actions"
+  ],
+  "author": "zengjing<hhtczengjing@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/cache": "^3.2.4",
+    "@actions/core": "^1.10.1",
+    "@actions/exec": "^1.1.1",
+    "@actions/tool-cache": "^4.0.0",
+    "@octokit/rest": "^19.0.13"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.12.12",
+    "@typescript-eslint/eslint-plugin": "^7.12.0",
+    "@typescript-eslint/parser": "^7.12.0",
+    "@vercel/ncc": "^0.38.1",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.4",
+    "typescript": "^5.4.5"
+  }
+}
