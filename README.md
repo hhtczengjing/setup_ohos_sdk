@@ -85,7 +85,7 @@ PATH                         # Updated to include SDK binaries
 
 ## How It Works
 
-1. **Version Resolution**: Uses provided version or fetches the latest from [ohos_command_line_tools](https://github.com/hhtczengjing/ohos_command_line_tools) GitHub Releases
+1. **Version Resolution**: Uses provided version or fetches the latest from the [ohos_command_line_tools](https://github.com/hhtczengjing/ohos_command_line_tools) repository
 2. **Platform Detection**: Automatically detects your OS and architecture
 3. **Cache Check**: Looks for cached SDK from previous runs
 4. **Download & Install**: Downloads the SDK package (.zip) if not cached
@@ -110,8 +110,9 @@ The action automatically caches the SDK after the first installation. This signi
 
 This action downloads HarmonyOS Next SDK from:
 - **Repository**: https://github.com/hhtczengjing/ohos_command_line_tools
+- **Version Source**: VERSION file and versions/{version}.json manifests
 - **Package Format**: `.zip` for all platforms
-- **Package Naming**: `ohos_command_line_tools-{version}-{platform}.zip`
+- **Package Naming**: `commandline-tools-{platform}-{version}.zip`
 
 ## Examples
 
@@ -134,7 +135,6 @@ jobs:
       - name: Setup HarmonyOS Next SDK
         uses: hhtczengjing/setup-ohos-sdk@v1
         with:
-          version: '5.0.11.100'
           version: '5.0.11.100'
 
       - name: Build App
