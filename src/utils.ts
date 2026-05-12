@@ -37,15 +37,6 @@ export function getPlatform(): Platform {
 }
 
 /**
- * Get the install package name based on version and platform
- * Downloads from https://github.com/hhtczengjing/ohos_command_line_tools
- */
-export function getPackageName(version: string, platform: Platform): string {
-  // All platforms use .zip format
-  return `ohos_command_line_tools-${version}-${platform}.zip`
-}
-
-/**
  * Get the base installation directory
  */
 export function getInstallBaseDir(): string {

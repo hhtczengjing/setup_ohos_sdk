@@ -4,11 +4,6 @@ export type Platform = 'windows-x64' | 'linux-x64' | 'macos-x64' | 'macos-arm64'
  */
 export declare function getPlatform(): Platform;
 /**
- * Get the install package name based on version and platform
- * Downloads from https://github.com/hhtczengjing/ohos_command_line_tools
- */
-export declare function getPackageName(version: string, platform: Platform): string;
-/**
  * Get the base installation directory
  */
 export declare function getInstallBaseDir(): string;

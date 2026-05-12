@@ -4,28 +4,28 @@ describe('Manifest', () => {
   describe('VersionManifest structure', () => {
     it('should have correct structure', () => {
       const manifest: VersionManifest = {
-        version: '5.0.11.100',
+        version: '6.1.1.268',
         platforms: {
           'windows-x64': {
-            url: 'https://example.com/windows-x64.zip',
-            filename: 'ohos_command_line_tools-5.0.11.100-windows-x64.zip'
+            url: 'https://example.com/commandline-tools-windows-x64-6.1.1.268.zip',
+            filename: 'commandline-tools-windows-x64-6.1.1.268.zip'
           },
           'linux-x64': {
-            url: 'https://example.com/linux-x64.zip',
-            filename: 'ohos_command_line_tools-5.0.11.100-linux-x64.zip'
+            url: 'https://example.com/commandline-tools-linux-x64-6.1.1.268.zip',
+            filename: 'commandline-tools-linux-x64-6.1.1.268.zip'
           },
           'macos-x64': {
-            url: 'https://example.com/macos-x64.zip',
-            filename: 'ohos_command_line_tools-5.0.11.100-macos-x64.zip'
+            url: 'https://example.com/commandline-tools-macos-x64-6.1.1.268.zip',
+            filename: 'commandline-tools-macos-x64-6.1.1.268.zip'
           },
           'macos-arm64': {
-            url: 'https://example.com/macos-arm64.zip',
-            filename: 'ohos_command_line_tools-5.0.11.100-macos-arm64.zip'
+            url: 'https://example.com/commandline-tools-macos-arm64-6.1.1.268.zip',
+            filename: 'commandline-tools-macos-arm64-6.1.1.268.zip'
           }
         }
       }
 
-      expect(manifest.version).toBe('5.0.11.100')
+      expect(manifest.version).toBe('6.1.1.268')
       expect(Object.keys(manifest.platforms)).toEqual([
         'windows-x64',
         'linux-x64',

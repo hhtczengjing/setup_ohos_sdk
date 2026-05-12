@@ -1,5 +1,5 @@
 import { isValidVersion, compareVersions } from '../version'
-import { getPlatform, getPackageName, getCommandLineToolsDir } from '../utils'
+import { getPlatform, getCommandLineToolsDir } from '../utils'
 
 describe('Version Management', () => {
   describe('isValidVersion', () => {
@@ -29,17 +29,6 @@ describe('Version Management', () => {
 })
 
 describe('Utils', () => {
-  describe('getPackageName', () => {
-    it('should return correct package name for each platform', () => {
-      const version = '5.0.11.100'
-
-      expect(getPackageName(version, 'windows-x64')).toBe('ohos_command_line_tools-5.0.11.100-windows-x64.zip')
-      expect(getPackageName(version, 'linux-x64')).toBe('ohos_command_line_tools-5.0.11.100-linux-x64.zip')
-      expect(getPackageName(version, 'macos-x64')).toBe('ohos_command_line_tools-5.0.11.100-macos-x64.zip')
-      expect(getPackageName(version, 'macos-arm64')).toBe('ohos_command_line_tools-5.0.11.100-macos-arm64.zip')
-    })
-  })
-
   describe('Path generation', () => {
     it('should generate correct installation paths', () => {
       const version = '5.0.11.100'

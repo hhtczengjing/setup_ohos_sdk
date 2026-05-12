@@ -34,7 +34,6 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPlatform = getPlatform;
-exports.getPackageName = getPackageName;
 exports.getInstallBaseDir = getInstallBaseDir;
 exports.getCommandLineToolsDir = getCommandLineToolsDir;
 exports.getHosSdkHome = getHosSdkHome;
@@ -69,14 +68,6 @@ function getPlatform() {
         throw new Error(`Unsupported macOS architecture: ${arch}`);
     }
     throw new Error(`Unsupported platform: ${platform}`);
-}
-/**
- * Get the install package name based on version and platform
- * Downloads from https://github.com/hhtczengjing/ohos_command_line_tools
- */
-function getPackageName(version, platform) {
-    // All platforms use .zip format
-    return `ohos_command_line_tools-${version}-${platform}.zip`;
 }
 /**
  * Get the base installation directory

@@ -16,28 +16,28 @@ describe('Integration - Manifest and Version', () => {
   describe('Module exports', () => {
     it('should export VersionManifest interface', () => {
       const manifest: VersionManifest = {
-        version: '5.0.11.100',
+        version: '6.1.1.268',
         platforms: {
           'windows-x64': {
-            url: 'https://example.com/windows.zip',
-            filename: 'test.zip'
+            url: 'https://example.com/commandline-tools-windows-x64-6.1.1.268.zip',
+            filename: 'commandline-tools-windows-x64-6.1.1.268.zip'
           },
           'linux-x64': {
-            url: 'https://example.com/linux.zip',
-            filename: 'test.zip'
+            url: 'https://example.com/commandline-tools-linux-x64-6.1.1.268.zip',
+            filename: 'commandline-tools-linux-x64-6.1.1.268.zip'
           },
           'macos-x64': {
-            url: 'https://example.com/macos-x64.zip',
-            filename: 'test.zip'
+            url: 'https://example.com/commandline-tools-macos-x64-6.1.1.268.zip',
+            filename: 'commandline-tools-macos-x64-6.1.1.268.zip'
           },
           'macos-arm64': {
-            url: 'https://example.com/macos-arm64.zip',
-            filename: 'test.zip'
+            url: 'https://example.com/commandline-tools-macos-arm64-6.1.1.268.zip',
+            filename: 'commandline-tools-macos-arm64-6.1.1.268.zip'
           }
         }
       }
 
-      expect(manifest.version).toBe('5.0.11.100')
+      expect(manifest.version).toBe('6.1.1.268')
       expect(manifest.platforms['windows-x64']).toBeDefined()
     })
 
