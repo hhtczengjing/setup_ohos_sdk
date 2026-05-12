@@ -7,3 +7,7 @@ lib/
 coverage/
 .nyc_output/
 licenses.txt
+
+# Allow dist/node_modules for GitHub Actions
+!dist/node_modules/
+!dist/node_modules/**
