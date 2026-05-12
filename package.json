@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && mkdir -p dist && cp -r lib/* dist/ && npm run bundle-deps",
-    "bundle-deps": "cp package.json package-lock.json dist/ && npm install --omit=dev --prefix dist && rm dist/package.json dist/package-lock.json && node scripts/clean-dist.js",
+    "bundle-deps": "rm -rf dist/node_modules && cp -r node_modules dist/",
     "test": "jest",
     "lint": "eslint src/**/*.ts"
   },
