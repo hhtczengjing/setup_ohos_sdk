@@ -17,20 +17,14 @@ async function run(): Promise<void> {
     const platform = getPlatform()
     core.info(`Detected platform: ${platform}`)
 
-    // Get repository info from environment
-    // In GitHub Actions, GITHUB_REPOSITORY is set to owner/repo
-    const githubRepository = process.env.GITHUB_REPOSITORY
-    if (!githubRepository) {
-      throw new Error(
-        'GITHUB_REPOSITORY environment variable not set. This action must run in GitHub Actions context.'
-      )
-    }
-
-    const [owner, repo] = githubRepository.split('/')
+    // Get repository info - use specific repo for version manifest
+    // The manifest is in hhtczengjing/ohos_command_line_tools
+    const manifestOwner = 'hhtczengjing'
+    const manifestRepo = 'ohos_command_line_tools'
 
     // Resolve version
     core.info('Resolving version...')
-    const version = await resolveVersion(versionInput, owner, repo)
+    const version = await resolveVersion(versionInput, manifestOwner, manifestRepo)
 
     // Create environment config
     const envConfig = createEnvConfig(version)
@@ -51,7 +45,7 @@ async function run(): Promise<void> {
       if (!fromCache) {
         // Install SDK
         core.info('Installing SDK...')
-        await installSdk(version, platform, owner, repo)
+        await installSdk(version, platform, manifestOwner, manifestRepo)
 
         // Save to cache
         await saveSdkToCache(version, platform, parentDir)

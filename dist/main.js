@@ -49,16 +49,13 @@ async function run() {
         core.info('Detecting platform...');
         const platform = (0, utils_1.getPlatform)();
         core.info(`Detected platform: ${platform}`);
-        // Get repository info from environment
-        // In GitHub Actions, GITHUB_REPOSITORY is set to owner/repo
-        const githubRepository = process.env.GITHUB_REPOSITORY;
-        if (!githubRepository) {
-            throw new Error('GITHUB_REPOSITORY environment variable not set. This action must run in GitHub Actions context.');
-        }
-        const [owner, repo] = githubRepository.split('/');
+        // Get repository info - use specific repo for version manifest
+        // The manifest is in hhtczengjing/ohos_command_line_tools
+        const manifestOwner = 'hhtczengjing';
+        const manifestRepo = 'ohos_command_line_tools';
         // Resolve version
         core.info('Resolving version...');
-        const version = await (0, version_1.resolveVersion)(versionInput, owner, repo);
+        const version = await (0, version_1.resolveVersion)(versionInput, manifestOwner, manifestRepo);
         // Create environment config
         const envConfig = (0, environment_1.createEnvConfig)(version);
         const commandLineToolsDir = envConfig.commandLineToolDir;
@@ -76,7 +73,7 @@ async function run() {
             if (!fromCache) {
                 // Install SDK
                 core.info('Installing SDK...');
-                await (0, installer_1.installSdk)(version, platform, owner, repo);
+                await (0, installer_1.installSdk)(version, platform, manifestOwner, manifestRepo);
                 // Save to cache
                 await (0, cache_1.saveSdkToCache)(version, platform, parentDir);
             }
