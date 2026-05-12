@@ -1,6 +1,6 @@
 import * as os from 'os'
 
-export type Platform = 'windows-x64' | 'linux-x64' | 'macos-x64' | 'macos-arm64'
+export type Platform = 'windows-x64' | 'linux-x64' | 'linux-x86' | 'macos-x64' | 'macos-x86' | 'macos-arm64'
 
 /**
  * Detect the current platform

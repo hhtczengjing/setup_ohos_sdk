@@ -50,10 +50,19 @@ const utils_1 = require("./utils");
 const version_1 = require("./version");
 /**
  * Get the download URL and checksum for a specific version and platform from manifest
+ * Falls back to compatible platform if not found (e.g., linux-x64 -> linux-x86)
  */
 async function getDownloadUrl(version, platform, owner, repo) {
     const manifest = await (0, version_1.getVersionManifestData)(version, owner, repo);
-    const platformInfo = manifest.platforms[platform];
+    let platformInfo = manifest.platforms[platform];
+    // Fallback to compatible platform if not found
+    if (!platformInfo) {
+        const fallback = getFallbackPlatform(platform);
+        if (fallback) {
+            core.info(`Platform ${platform} not found, falling back to ${fallback}`);
+            platformInfo = manifest.platforms[fallback];
+        }
+    }
     if (!platformInfo) {
         throw new Error(`Platform ${platform} not found in version manifest for ${version}`);
     }
@@ -61,6 +70,17 @@ async function getDownloadUrl(version, platform, owner, repo) {
         url: platformInfo.downloadUrl,
         checksum: platformInfo.sha256
     };
+}
+/**
+ * Get fallback platform for compatibility
+ * e.g., linux-x64 -> linux-x86, macos-x64 -> macos-x86
+ */
+function getFallbackPlatform(platform) {
+    const fallbackMap = {
+        'linux-x64': 'linux-x86',
+        'macos-x64': 'macos-x86'
+    };
+    return fallbackMap[platform] || null;
 }
 /**
  * Download the SDK package

@@ -8,6 +8,7 @@ interface PlatformDownloadInfo {
 }
 /**
  * Get the download URL and checksum for a specific version and platform from manifest
+ * Falls back to compatible platform if not found (e.g., linux-x64 -> linux-x86)
  */
 export declare function getDownloadUrl(version: string, platform: Platform, owner: string, repo: string): Promise<PlatformDownloadInfo>;
 /**

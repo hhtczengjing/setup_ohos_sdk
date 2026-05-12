@@ -17,6 +17,7 @@ interface PlatformDownloadInfo {
 
 /**
  * Get the download URL and checksum for a specific version and platform from manifest
+ * Falls back to compatible platform if not found (e.g., linux-x64 -> linux-x86)
  */
 export async function getDownloadUrl(
   version: string,
@@ -25,7 +26,16 @@ export async function getDownloadUrl(
   repo: string
 ): Promise<PlatformDownloadInfo> {
   const manifest = await getVersionManifestData(version, owner, repo)
-  const platformInfo = manifest.platforms[platform]
+  let platformInfo = manifest.platforms[platform]
+
+  // Fallback to compatible platform if not found
+  if (!platformInfo) {
+    const fallback = getFallbackPlatform(platform)
+    if (fallback) {
+      core.info(`Platform ${platform} not found, falling back to ${fallback}`)
+      platformInfo = manifest.platforms[fallback]
+    }
+  }
 
   if (!platformInfo) {
     throw new Error(`Platform ${platform} not found in version manifest for ${version}`)
@@ -35,6 +45,18 @@ export async function getDownloadUrl(
     url: platformInfo.downloadUrl,
     checksum: platformInfo.sha256
   }
+}
+
+/**
+ * Get fallback platform for compatibility
+ * e.g., linux-x64 -> linux-x86, macos-x64 -> macos-x86
+ */
+function getFallbackPlatform(platform: Platform): Platform | null {
+  const fallbackMap: Record<string, Platform> = {
+    'linux-x64': 'linux-x86',
+    'macos-x64': 'macos-x86'
+  }
+  return fallbackMap[platform] || null
 }
 
 /**

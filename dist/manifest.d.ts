@@ -13,8 +13,10 @@ export interface VersionManifest {
     buildVersion: string;
     platforms: {
         'windows-x64': PlatformInfo;
-        'linux-x64': PlatformInfo;
-        'macos-x64': PlatformInfo;
+        'linux-x64'?: PlatformInfo;
+        'linux-x86'?: PlatformInfo;
+        'macos-x64'?: PlatformInfo;
+        'macos-x86'?: PlatformInfo;
         'macos-arm64': PlatformInfo;
     };
 }

@@ -1,7 +1,23 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import * as crypto from 'crypto'
-import { verifyPackageChecksum } from '../installer'
+import { verifyPackageChecksum, getDownloadUrl } from '../installer'
+import * as core from '@actions/core'
+
+// Mock core module
+jest.mock('@actions/core', () => ({
+  info: jest.fn(),
+  warning: jest.fn(),
+  debug: jest.fn(),
+  error: jest.fn(),
+  setOutput: jest.fn(),
+  setFailed: jest.fn()
+}))
+
+// Mock getVersionManifestData
+jest.mock('../version', () => ({
+  getVersionManifestData: jest.fn()
+}))
 
 describe('Installer - SHA256 Checksum Verification', () => {
   const testDir = path.join(__dirname, 'tmp-checksum-test')
@@ -96,6 +112,142 @@ describe('Installer - SHA256 Checksum Verification', () => {
 
     // Should verify large file correctly
     await expect(verifyPackageChecksum(testFile, expectedChecksum)).resolves.toBeUndefined()
+  })
+})
+
+describe('Installer - Platform Fallback Compatibility', () => {
+  const { getVersionManifestData } = require('../version')
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should fall back from linux-x64 to linux-x86 when platform not found', async () => {
+    // Mock manifest with only linux-x86 (no linux-x64)
+    getVersionManifestData.mockResolvedValue({
+      buildVersion: '5.0.0.100',
+      platforms: {
+        'windows-x64': {
+          downloadUrl: 'https://example.com/windows-x64.zip',
+          packageName: 'commandline-tools-windows-x64-5.0.0.100.zip'
+        },
+        'linux-x86': {
+          downloadUrl: 'https://example.com/linux-x86.zip',
+          packageName: 'commandline-tools-linux-x86-5.0.0.100.zip',
+          sha256: 'abc123'
+        },
+        'macos-x86': {
+          downloadUrl: 'https://example.com/macos-x86.zip',
+          packageName: 'commandline-tools-macos-x86-5.0.0.100.zip'
+        },
+        'macos-arm64': {
+          downloadUrl: 'https://example.com/macos-arm64.zip',
+          packageName: 'commandline-tools-macos-arm64-5.0.0.100.zip'
+        }
+      }
+    })
+
+    const result = await getDownloadUrl('5.0.0.100', 'linux-x64', 'owner', 'repo')
+
+    expect(result.url).toBe('https://example.com/linux-x86.zip')
+    expect(result.checksum).toBe('abc123')
+    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('linux-x64'))
+    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('linux-x86'))
+  })
+
+  it('should fall back from macos-x64 to macos-x86 when platform not found', async () => {
+    // Mock manifest with only macos-x86 (no macos-x64)
+    getVersionManifestData.mockResolvedValue({
+      buildVersion: '5.0.0.100',
+      platforms: {
+        'windows-x64': {
+          downloadUrl: 'https://example.com/windows-x64.zip',
+          packageName: 'commandline-tools-windows-x64-5.0.0.100.zip'
+        },
+        'linux-x86': {
+          downloadUrl: 'https://example.com/linux-x86.zip',
+          packageName: 'commandline-tools-linux-x86-5.0.0.100.zip'
+        },
+        'macos-x86': {
+          downloadUrl: 'https://example.com/macos-x86.zip',
+          packageName: 'commandline-tools-macos-x86-5.0.0.100.zip',
+          sha256: 'def456'
+        },
+        'macos-arm64': {
+          downloadUrl: 'https://example.com/macos-arm64.zip',
+          packageName: 'commandline-tools-macos-arm64-5.0.0.100.zip'
+        }
+      }
+    })
+
+    const result = await getDownloadUrl('5.0.0.100', 'macos-x64', 'owner', 'repo')
+
+    expect(result.url).toBe('https://example.com/macos-x86.zip')
+    expect(result.checksum).toBe('def456')
+    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('macos-x64'))
+    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('macos-x86'))
+  })
+
+  it('should throw error when platform not found and no fallback available', async () => {
+    // Mock manifest without linux-x64 or linux-x86
+    getVersionManifestData.mockResolvedValue({
+      buildVersion: '5.0.0.100',
+      platforms: {
+        'windows-x64': {
+          downloadUrl: 'https://example.com/windows-x64.zip',
+          packageName: 'commandline-tools-windows-x64-5.0.0.100.zip'
+        },
+        'macos-x86': {
+          downloadUrl: 'https://example.com/macos-x86.zip',
+          packageName: 'commandline-tools-macos-x86-5.0.0.100.zip'
+        },
+        'macos-arm64': {
+          downloadUrl: 'https://example.com/macos-arm64.zip',
+          packageName: 'commandline-tools-macos-arm64-5.0.0.100.zip'
+        }
+      }
+    })
+
+    await expect(getDownloadUrl('5.0.0.100', 'linux-x64', 'owner', 'repo')).rejects.toThrow(
+      'Platform linux-x64 not found in version manifest for 5.0.0.100'
+    )
+  })
+
+  it('should use direct platform when available (no fallback needed)', async () => {
+    // Mock manifest with linux-x64 available
+    getVersionManifestData.mockResolvedValue({
+      buildVersion: '5.0.0.100',
+      platforms: {
+        'windows-x64': {
+          downloadUrl: 'https://example.com/windows-x64.zip',
+          packageName: 'commandline-tools-windows-x64-5.0.0.100.zip'
+        },
+        'linux-x64': {
+          downloadUrl: 'https://example.com/linux-x64.zip',
+          packageName: 'commandline-tools-linux-x64-5.0.0.100.zip',
+          sha256: 'xyz789'
+        },
+        'linux-x86': {
+          downloadUrl: 'https://example.com/linux-x86.zip',
+          packageName: 'commandline-tools-linux-x86-5.0.0.100.zip'
+        },
+        'macos-x86': {
+          downloadUrl: 'https://example.com/macos-x86.zip',
+          packageName: 'commandline-tools-macos-x86-5.0.0.100.zip'
+        },
+        'macos-arm64': {
+          downloadUrl: 'https://example.com/macos-arm64.zip',
+          packageName: 'commandline-tools-macos-arm64-5.0.0.100.zip'
+        }
+      }
+    })
+
+    const result = await getDownloadUrl('5.0.0.100', 'linux-x64', 'owner', 'repo')
+
+    // Should use linux-x64 directly without logging fallback message
+    expect(result.url).toBe('https://example.com/linux-x64.zip')
+    expect(result.checksum).toBe('xyz789')
+    expect(core.info).not.toHaveBeenCalledWith(expect.stringContaining('falling back'))
   })
 })
 
