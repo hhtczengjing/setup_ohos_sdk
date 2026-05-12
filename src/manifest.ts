@@ -5,16 +5,16 @@ import { Octokit } from '@octokit/rest'
  * Platform information in the version manifest
  */
 export interface PlatformInfo {
-  url: string
-  filename: string
-  checksum?: string
+  downloadUrl: string
+  packageName: string
+  sha256?: string
 }
 
 /**
  * Version manifest structure
  */
 export interface VersionManifest {
-  version: string
+  buildVersion: string
   platforms: {
     'windows-x64': PlatformInfo
     'linux-x64': PlatformInfo
@@ -33,7 +33,7 @@ export async function getVersionManifest(
   repo: string
 ): Promise<VersionManifest> {
   // Try direct GitHub raw content URL first
-  const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/versions/${version}.json`
+  const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/master/versions/${version}.json`
 
   try {
     core.debug(`Attempting to fetch manifest from: ${rawUrl}`)
@@ -94,7 +94,7 @@ export async function getLatestVersionNumber(
   repo: string
 ): Promise<string> {
   // Try direct GitHub raw content URL first
-  const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/VERSION`
+  const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/master/VERSION`
 
   try {
     core.debug(`Attempting to fetch VERSION file from: ${rawUrl}`)
@@ -174,7 +174,7 @@ export async function resolveVersionManifest(
     if (inputVersion?.trim()) {
       throw new Error(
         `Failed to resolve version ${inputVersion}: ${message}\n` +
-          `Available versions can be found at: https://github.com/${owner}/${repo}/tree/main/versions`
+          `Available versions can be found at: https://github.com/${owner}/${repo}/tree/master/versions`
       )
     }
 

@@ -58,8 +58,8 @@ async function getDownloadUrl(version, platform, owner, repo) {
         throw new Error(`Platform ${platform} not found in version manifest for ${version}`);
     }
     return {
-        url: platformInfo.url,
-        checksum: platformInfo.checksum
+        url: platformInfo.downloadUrl,
+        checksum: platformInfo.sha256
     };
 }
 /**

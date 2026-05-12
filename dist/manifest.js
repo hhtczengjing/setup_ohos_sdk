@@ -44,7 +44,7 @@ const rest_1 = require("@octokit/rest");
  */
 async function getVersionManifest(version, owner, repo) {
     // Try direct GitHub raw content URL first
-    const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/versions/${version}.json`;
+    const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/master/versions/${version}.json`;
     try {
         core.debug(`Attempting to fetch manifest from: ${rawUrl}`);
         const response = await fetch(rawUrl);
@@ -95,7 +95,7 @@ async function getVersionManifest(version, owner, repo) {
  */
 async function getLatestVersionNumber(owner, repo) {
     // Try direct GitHub raw content URL first
-    const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/VERSION`;
+    const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/master/VERSION`;
     try {
         core.debug(`Attempting to fetch VERSION file from: ${rawUrl}`);
         const response = await fetch(rawUrl);
@@ -160,7 +160,7 @@ async function resolveVersionManifest(inputVersion, owner, repo) {
         // If user specified a version that doesn't exist, that's a clear error
         if (inputVersion?.trim()) {
             throw new Error(`Failed to resolve version ${inputVersion}: ${message}\n` +
-                `Available versions can be found at: https://github.com/${owner}/${repo}/tree/main/versions`);
+                `Available versions can be found at: https://github.com/${owner}/${repo}/tree/master/versions`);
         }
         // If we tried to get the latest and it failed, suggest fallback
         throw new Error(`Failed to fetch latest version manifest: ${message}\n` +

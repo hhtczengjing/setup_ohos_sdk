@@ -32,8 +32,8 @@ export async function getDownloadUrl(
   }
 
   return {
-    url: platformInfo.url,
-    checksum: platformInfo.checksum
+    url: platformInfo.downloadUrl,
+    checksum: platformInfo.sha256
   }
 }
 

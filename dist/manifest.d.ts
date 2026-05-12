@@ -2,15 +2,15 @@
  * Platform information in the version manifest
  */
 export interface PlatformInfo {
-    url: string;
-    filename: string;
-    checksum?: string;
+    downloadUrl: string;
+    packageName: string;
+    sha256?: string;
 }
 /**
  * Version manifest structure
  */
 export interface VersionManifest {
-    version: string;
+    buildVersion: string;
     platforms: {
         'windows-x64': PlatformInfo;
         'linux-x64': PlatformInfo;
