@@ -36,24 +36,45 @@ jobs:
 ### Specify Version
 
 ```yaml
-- name: Setup HarmonyOS Next SDK
-  uses: hhtczengjing/setup-ohos-sdk@v1
-  with:
-    version: '5.0.11.100'
+name: Build with Specific SDK Version
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup HarmonyOS Next SDK
+        uses: hhtczengjing/setup-ohos-sdk@v1
+        with:
+          version: '5.0.11.100'
+
+      - name: Build
+        run: echo "Using SDK ${{ env.COMMANDLINE_TOOLS_VERSION }}"
 ```
 
 ### Using Outputs
 
 ```yaml
-- name: Setup HarmonyOS Next SDK
-  id: setup-sdk
-  uses: hhtczengjing/setup-ohos-sdk@v1
+name: Using Action Outputs
+on: [push, pull_request]
 
-- name: Verify Installation
-  run: |
-    echo "Command-line tools: ${{ steps.setup-sdk.outputs.command-line-tools-path }}"
-    echo "SDK Home: ${{ steps.setup-sdk.outputs.sdk-home }}"
-    echo "HDC Home: ${{ steps.setup-sdk.outputs.hdc-home }}"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup HarmonyOS Next SDK
+        id: setup-sdk
+        uses: hhtczengjing/setup-ohos-sdk@v1
+
+      - name: Verify Installation
+        run: |
+          echo "Command-line tools: ${{ steps.setup-sdk.outputs.command-line-tools-path }}"
+          echo "SDK Home: ${{ steps.setup-sdk.outputs.sdk-home }}"
+          echo "HDC Home: ${{ steps.setup-sdk.outputs.hdc-home }}"
 ```
 
 ## Inputs
@@ -146,6 +167,9 @@ jobs:
 ### Version Matrix
 
 ```yaml
+name: Version Matrix Build
+on: [push]
+
 jobs:
   build:
     strategy:
@@ -160,15 +184,18 @@ jobs:
         uses: hhtczengjing/setup-ohos-sdk@v1
         with:
           version: ${{ matrix.sdk-version }}
+
+      - name: Build with ${{ matrix.sdk-version }}
+        run: echo "Building with SDK ${{ env.COMMANDLINE_TOOLS_VERSION }}"
 ```
 
 ## Troubleshooting
 
 ### "No such file or directory" during download
 
-This typically means the specified version doesn't exist in GitHub Releases. Verify:
+This typically means the specified version doesn't exist in the ohos_command_line_tools repository. Verify:
 - The version format is correct (X.X.X.X)
-- The release actually exists on GitHub
+- The version actually exists in https://github.com/hhtczengjing/ohos_command_line_tools/tree/main/versions
 - Your internet connection is working
 
 ### SDK structure verification failed
