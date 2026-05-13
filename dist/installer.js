@@ -254,18 +254,18 @@ async function installSdk(version, platform, owner, repo) {
         core.info('Extracting SDK package...');
         const extractedPath = await extractPackage(downloadPath, platform, finalDir);
         // Handle nested extraction (if zip contains a "command-line-tools" folder)
+        // When unzip extracts to finalDir, if ZIP has nested structure like:
+        // command-line-tools/sdk/... then we need to move it up one level
         const possibleNestedDir = path.join(extractedPath, 'command-line-tools');
-        if (fs.existsSync(possibleNestedDir)) {
-            core.info('Moving nested command-line-tools directory to parent...');
-            // If command-line-tools already exists at final location, just merge the contents
+        if (fs.existsSync(possibleNestedDir) && possibleNestedDir !== commandLineToolsDir) {
+            core.info('Flattening nested command-line-tools directory...');
+            // Remove existing directory if it exists (shouldn't happen on first install)
             if (fs.existsSync(commandLineToolsDir)) {
-                // Merge nested into existing
-                moveDir(possibleNestedDir, commandLineToolsDir);
+                fs.rmSync(commandLineToolsDir, { recursive: true, force: true });
             }
-            else {
-                // Rename the nested directory to final location
-                fs.renameSync(possibleNestedDir, commandLineToolsDir);
-            }
+            // Rename the nested directory to the final location
+            // This preserves all symlinks since we're just renaming
+            fs.renameSync(possibleNestedDir, commandLineToolsDir);
         }
         // Verify the structure
         await verifySdkStructure(commandLineToolsDir);
@@ -278,49 +278,6 @@ async function installSdk(version, platform, owner, repo) {
         // Clean up on failure
         fs.rmSync(path.join(installBaseDir, version), { recursive: true, force: true });
         throw error;
-    }
-}
-/**
- * Move directory while preserving symlinks
- * Handles conflicts by removing destination if it exists
- */
-function moveDir(src, dest) {
-    if (!fs.existsSync(dest)) {
-        fs.mkdirSync(dest, { recursive: true });
-    }
-    const files = fs.readdirSync(src);
-    for (const file of files) {
-        const srcPath = path.join(src, file);
-        const destPath = path.join(dest, file);
-        const stat = fs.lstatSync(srcPath);
-        // Always remove destination if it exists to avoid conflicts
-        if (fs.existsSync(destPath) || fs.lstatSync(destPath)) {
-            try {
-                const destStat = fs.lstatSync(destPath);
-                if (destStat.isSymbolicLink() || !destStat.isDirectory()) {
-                    fs.unlinkSync(destPath);
-                }
-                else {
-                    fs.rmSync(destPath, { recursive: true, force: true });
-                }
-            }
-            catch {
-                // Ignore if dest doesn't exist or can't be stat'd
-            }
-        }
-        if (stat.isSymbolicLink()) {
-            // Handle symlinks - recreate at destination
-            const linkTarget = fs.readlinkSync(srcPath);
-            fs.symlinkSync(linkTarget, destPath);
-        }
-        else if (stat.isDirectory()) {
-            // Recursively move directories
-            moveDir(srcPath, destPath);
-        }
-        else {
-            // Move regular files
-            fs.renameSync(srcPath, destPath);
-        }
     }
 }
 //# sourceMappingURL=installer.js.map
