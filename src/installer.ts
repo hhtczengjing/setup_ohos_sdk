@@ -294,28 +294,48 @@ export async function installSdk(
     // Check what was actually extracted
     const extractedContents = fs.readdirSync(extractedPath)
     core.info(`Extracted contents: ${extractedContents.join(', ')}`)
+    core.info(`Extracted path: ${extractedPath}`)
+    core.info(`Expected final path: ${commandLineToolsDir}`)
 
-    // Handle nested extraction (if zip contains a "command-line-tools" folder)
-    // When unzip extracts to finalDir, if ZIP has nested structure like:
-    // command-line-tools/sdk/... then we need to move it up one level
+    // Handle different extraction scenarios
+    // On Windows: tc.extractZip() might return the command-line-tools directory directly
+    // On Linux/macOS: unzip might extract to a parent directory with command-line-tools inside
+
     const possibleNestedDir = path.join(extractedPath, 'command-line-tools')
-    if (fs.existsSync(possibleNestedDir) && possibleNestedDir !== commandLineToolsDir) {
+    const isNestedStructure =
+      fs.existsSync(possibleNestedDir) &&
+      possibleNestedDir !== commandLineToolsDir &&
+      extractedPath !== commandLineToolsDir
+
+    if (isNestedStructure) {
+      // Case 1: Nested structure - need to flatten
       core.info('Flattening nested command-line-tools directory...')
 
-      // Remove existing directory if it exists (shouldn't happen on first install)
+      // Remove existing directory if it exists
       if (fs.existsSync(commandLineToolsDir)) {
         fs.rmSync(commandLineToolsDir, { recursive: true, force: true })
       }
 
       // Rename the nested directory to the final location
-      // This preserves all symlinks since we're just renaming
       fs.renameSync(possibleNestedDir, commandLineToolsDir)
-    } else if (!fs.existsSync(commandLineToolsDir)) {
-      // If there's no nested directory, the extraction should already have
-      // created the command-line-tools directory structure in the right place
-      // This shouldn't happen, so log a warning
-      core.warning(`No command-line-tools directory found at ${commandLineToolsDir}`)
-      core.warning(`Available directories: ${extractedContents.join(', ')}`)
+    } else if (extractedPath !== commandLineToolsDir && fs.existsSync(extractedPath)) {
+      // Case 2: Extracted to a parent directory, but no nested command-line-tools found
+      // This might be the direct structure - verify that required directories exist
+      core.info('Verifying extraction result...')
+      if (!fs.existsSync(commandLineToolsDir)) {
+        // Try to use the extracted path as the command-line-tools directory
+        core.info(`Using extracted path as command-line-tools directory`)
+        // The verification step will check if this is valid
+      }
+    } else if (extractedPath === commandLineToolsDir) {
+      // Case 3: Already at the correct location (likely Windows with tc.extractZip)
+      core.info('SDK extracted directly to final location')
+    } else {
+      // Case 4: Something unexpected
+      core.warning(`Unexpected extraction result`)
+      core.warning(`Extracted path: ${extractedPath}`)
+      core.warning(`Expected final path: ${commandLineToolsDir}`)
+      core.warning(`Available contents: ${extractedContents.join(', ')}`)
     }
 
     // Verify the structure
