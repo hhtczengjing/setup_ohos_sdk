@@ -296,26 +296,14 @@ export async function installSdk(
     if (fs.existsSync(possibleNestedDir)) {
       core.info('Moving nested command-line-tools directory to parent...')
 
-      // Ensure command-line-tools directory exists
-      if (!fs.existsSync(commandLineToolsDir)) {
-        fs.mkdirSync(commandLineToolsDir, { recursive: true })
+      // If command-line-tools already exists at final location, just merge the contents
+      if (fs.existsSync(commandLineToolsDir)) {
+        // Merge nested into existing
+        moveDir(possibleNestedDir, commandLineToolsDir)
+      } else {
+        // Rename the nested directory to final location
+        fs.renameSync(possibleNestedDir, commandLineToolsDir)
       }
-
-      // Move files from nested dir to command-line-tools dir
-      // preserving symlinks by using the filesystem directly
-      for (const file of fs.readdirSync(possibleNestedDir)) {
-        const srcPath = path.join(possibleNestedDir, file)
-        const destPath = path.join(commandLineToolsDir, file)
-
-        if (fs.lstatSync(srcPath).isDirectory()) {
-          moveDir(srcPath, destPath)
-        } else {
-          fs.renameSync(srcPath, destPath)
-        }
-      }
-
-      // Clean up the nested directory
-      fs.rmSync(possibleNestedDir, { recursive: true, force: true })
     }
 
     // Verify the structure
@@ -335,6 +323,7 @@ export async function installSdk(
 
 /**
  * Move directory while preserving symlinks
+ * Handles conflicts by removing destination if it exists
  */
 function moveDir(src: string, dest: string): void {
   if (!fs.existsSync(dest)) {
@@ -348,14 +337,29 @@ function moveDir(src: string, dest: string): void {
     const destPath = path.join(dest, file)
     const stat = fs.lstatSync(srcPath)
 
+    // Always remove destination if it exists to avoid conflicts
+    if (fs.existsSync(destPath) || fs.lstatSync(destPath)) {
+      try {
+        const destStat = fs.lstatSync(destPath)
+        if (destStat.isSymbolicLink() || !destStat.isDirectory()) {
+          fs.unlinkSync(destPath)
+        } else {
+          fs.rmSync(destPath, { recursive: true, force: true })
+        }
+      } catch {
+        // Ignore if dest doesn't exist or can't be stat'd
+      }
+    }
+
     if (stat.isSymbolicLink()) {
-      // Handle symlinks
+      // Handle symlinks - recreate at destination
       const linkTarget = fs.readlinkSync(srcPath)
       fs.symlinkSync(linkTarget, destPath)
-      fs.unlinkSync(srcPath)
     } else if (stat.isDirectory()) {
+      // Recursively move directories
       moveDir(srcPath, destPath)
     } else {
+      // Move regular files
       fs.renameSync(srcPath, destPath)
     }
   }
