@@ -149,8 +149,8 @@ async function verifyPackageChecksum(downloadPath, expectedChecksum) {
     });
 }
 /**
- * Extract the downloaded package
- * All packages are in .zip format
+ * Extract the downloaded package directly to final location
+ * Uses native unzip command to preserve symlinks
  */
 async function extractPackage(downloadPath, platform, extractDir) {
     core.info(`Extracting package to ${extractDir}...`);
@@ -158,17 +158,27 @@ async function extractPackage(downloadPath, platform, extractDir) {
     if (!fs.existsSync(extractDir)) {
         fs.mkdirSync(extractDir, { recursive: true });
     }
-    let extractedPath;
     try {
-        // All packages are .zip format
-        extractedPath = await tc.extractZip(downloadPath, extractDir);
+        // Use native unzip command to preserve symlinks on Linux/macOS
+        if (process.platform !== 'win32') {
+            core.info('Using native unzip command to preserve symlinks...');
+            await exec.exec('unzip', ['-q', downloadPath, '-d', extractDir]);
+            const extractedPath = extractDir;
+            core.info(`Extracted to: ${extractedPath}`);
+            return extractedPath;
+        }
+        else {
+            // On Windows, use tool-cache's extractZip
+            core.info('Using tool-cache extractZip for Windows...');
+            const extractedPath = await tc.extractZip(downloadPath, extractDir);
+            core.info(`Extracted to: ${extractedPath}`);
+            return extractedPath;
+        }
     }
     catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         throw new Error(`Failed to extract package: ${message}`);
     }
-    core.info(`Extracted to: ${extractedPath}`);
-    return extractedPath;
 }
 /**
  * Verify the extracted SDK structure
@@ -234,41 +244,42 @@ async function installSdk(version, platform, owner, repo) {
     try {
         // Verify checksum if provided
         await verifyPackageChecksum(downloadPath, downloadResult.checksum);
-        // Extract to a temporary directory first
-        const tempExtractDir = path.join(installBaseDir, version, 'temp');
-        const extractedPath = await extractPackage(downloadPath, platform, tempExtractDir);
-        // Move extracted content to final location
-        // The extracted path might be nested, so we need to handle that
+        // Ensure base directory exists
         const finalDir = path.join(installBaseDir, version);
         if (!fs.existsSync(finalDir)) {
             fs.mkdirSync(finalDir, { recursive: true });
         }
-        // Clean up and move
-        const sourceDir = fs.existsSync(path.join(extractedPath, 'command-line-tools'))
-            ? path.join(extractedPath, 'command-line-tools')
-            : extractedPath;
-        // Ensure command-line-tools directory exists
-        if (!fs.existsSync(commandLineToolsDir)) {
-            fs.mkdirSync(commandLineToolsDir, { recursive: true });
-        }
-        // Copy files from source to final location
-        for (const file of fs.readdirSync(sourceDir)) {
-            const srcPath = path.join(sourceDir, file);
-            const destPath = path.join(commandLineToolsDir, file);
-            if (fs.statSync(srcPath).isDirectory()) {
-                // Recursively copy directories
-                copyDirSync(srcPath, destPath);
+        // Extract directly to final location
+        // This preserves symlinks on Linux/macOS
+        core.info('Extracting SDK package...');
+        const extractedPath = await extractPackage(downloadPath, platform, finalDir);
+        // Handle nested extraction (if zip contains a "command-line-tools" folder)
+        const possibleNestedDir = path.join(extractedPath, 'command-line-tools');
+        if (fs.existsSync(possibleNestedDir)) {
+            core.info('Moving nested command-line-tools directory to parent...');
+            // Ensure command-line-tools directory exists
+            if (!fs.existsSync(commandLineToolsDir)) {
+                fs.mkdirSync(commandLineToolsDir, { recursive: true });
             }
-            else {
-                fs.copyFileSync(srcPath, destPath);
+            // Move files from nested dir to command-line-tools dir
+            // preserving symlinks by using the filesystem directly
+            for (const file of fs.readdirSync(possibleNestedDir)) {
+                const srcPath = path.join(possibleNestedDir, file);
+                const destPath = path.join(commandLineToolsDir, file);
+                if (fs.lstatSync(srcPath).isDirectory()) {
+                    moveDir(srcPath, destPath);
+                }
+                else {
+                    fs.renameSync(srcPath, destPath);
+                }
             }
+            // Clean up the nested directory
+            fs.rmSync(possibleNestedDir, { recursive: true, force: true });
         }
         // Verify the structure
         await verifySdkStructure(commandLineToolsDir);
         // Set executable permissions
         await setExecutablePermissions(commandLineToolsDir);
-        // Clean up temp directory
-        fs.rmSync(tempExtractDir, { recursive: true, force: true });
         core.info(`SDK installed successfully at ${commandLineToolsDir}`);
         return commandLineToolsDir;
     }
@@ -279,20 +290,28 @@ async function installSdk(version, platform, owner, repo) {
     }
 }
 /**
- * Recursively copy directory
+ * Move directory while preserving symlinks
  */
-function copyDirSync(src, dest) {
-    fs.mkdirSync(dest, { recursive: true });
+function moveDir(src, dest) {
+    if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dest, { recursive: true });
+    }
     const files = fs.readdirSync(src);
     for (const file of files) {
         const srcPath = path.join(src, file);
         const destPath = path.join(dest, file);
-        const stat = fs.statSync(srcPath);
-        if (stat.isDirectory()) {
-            copyDirSync(srcPath, destPath);
+        const stat = fs.lstatSync(srcPath);
+        if (stat.isSymbolicLink()) {
+            // Handle symlinks
+            const linkTarget = fs.readlinkSync(srcPath);
+            fs.symlinkSync(linkTarget, destPath);
+            fs.unlinkSync(srcPath);
+        }
+        else if (stat.isDirectory()) {
+            moveDir(srcPath, destPath);
         }
         else {
-            fs.copyFileSync(srcPath, destPath);
+            fs.renameSync(srcPath, destPath);
         }
     }
 }

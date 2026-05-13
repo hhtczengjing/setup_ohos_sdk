@@ -29,8 +29,8 @@ export declare function downloadPackage(version: string, platform: Platform, own
  */
 export declare function verifyPackageChecksum(downloadPath: string, expectedChecksum: string | undefined): Promise<void>;
 /**
- * Extract the downloaded package
- * All packages are in .zip format
+ * Extract the downloaded package directly to final location
+ * Uses native unzip command to preserve symlinks
  */
 export declare function extractPackage(downloadPath: string, platform: Platform, extractDir: string): Promise<string>;
 /**

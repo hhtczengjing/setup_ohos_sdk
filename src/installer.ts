@@ -160,8 +160,8 @@ export async function verifyPackageChecksum(
 }
 
 /**
- * Extract the downloaded package
- * All packages are in .zip format
+ * Extract the downloaded package directly to final location
+ * Uses native unzip command to preserve symlinks
  */
 export async function extractPackage(
   downloadPath: string,
@@ -175,17 +175,25 @@ export async function extractPackage(
     fs.mkdirSync(extractDir, { recursive: true })
   }
 
-  let extractedPath: string
   try {
-    // All packages are .zip format
-    extractedPath = await tc.extractZip(downloadPath, extractDir)
+    // Use native unzip command to preserve symlinks on Linux/macOS
+    if (process.platform !== 'win32') {
+      core.info('Using native unzip command to preserve symlinks...')
+      await exec.exec('unzip', ['-q', downloadPath, '-d', extractDir])
+      const extractedPath = extractDir
+      core.info(`Extracted to: ${extractedPath}`)
+      return extractedPath
+    } else {
+      // On Windows, use tool-cache's extractZip
+      core.info('Using tool-cache extractZip for Windows...')
+      const extractedPath = await tc.extractZip(downloadPath, extractDir)
+      core.info(`Extracted to: ${extractedPath}`)
+      return extractedPath
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     throw new Error(`Failed to extract package: ${message}`)
   }
-
-  core.info(`Extracted to: ${extractedPath}`)
-  return extractedPath
 }
 
 /**
@@ -272,39 +280,42 @@ export async function installSdk(
     // Verify checksum if provided
     await verifyPackageChecksum(downloadPath, downloadResult.checksum)
 
-    // Extract to a temporary directory first
-    const tempExtractDir = path.join(installBaseDir, version, 'temp')
-
-    const extractedPath = await extractPackage(downloadPath, platform, tempExtractDir)
-
-    // Move extracted content to final location
-    // The extracted path might be nested, so we need to handle that
+    // Ensure base directory exists
     const finalDir = path.join(installBaseDir, version)
     if (!fs.existsSync(finalDir)) {
       fs.mkdirSync(finalDir, { recursive: true })
     }
 
-    // Clean up and move
-    const sourceDir = fs.existsSync(path.join(extractedPath, 'command-line-tools'))
-      ? path.join(extractedPath, 'command-line-tools')
-      : extractedPath
+    // Extract directly to final location
+    // This preserves symlinks on Linux/macOS
+    core.info('Extracting SDK package...')
+    const extractedPath = await extractPackage(downloadPath, platform, finalDir)
 
-    // Ensure command-line-tools directory exists
-    if (!fs.existsSync(commandLineToolsDir)) {
-      fs.mkdirSync(commandLineToolsDir, { recursive: true })
-    }
+    // Handle nested extraction (if zip contains a "command-line-tools" folder)
+    const possibleNestedDir = path.join(extractedPath, 'command-line-tools')
+    if (fs.existsSync(possibleNestedDir)) {
+      core.info('Moving nested command-line-tools directory to parent...')
 
-    // Copy files from source to final location
-    for (const file of fs.readdirSync(sourceDir)) {
-      const srcPath = path.join(sourceDir, file)
-      const destPath = path.join(commandLineToolsDir, file)
-
-      if (fs.statSync(srcPath).isDirectory()) {
-        // Recursively copy directories
-        copyDirSync(srcPath, destPath)
-      } else {
-        fs.copyFileSync(srcPath, destPath)
+      // Ensure command-line-tools directory exists
+      if (!fs.existsSync(commandLineToolsDir)) {
+        fs.mkdirSync(commandLineToolsDir, { recursive: true })
       }
+
+      // Move files from nested dir to command-line-tools dir
+      // preserving symlinks by using the filesystem directly
+      for (const file of fs.readdirSync(possibleNestedDir)) {
+        const srcPath = path.join(possibleNestedDir, file)
+        const destPath = path.join(commandLineToolsDir, file)
+
+        if (fs.lstatSync(srcPath).isDirectory()) {
+          moveDir(srcPath, destPath)
+        } else {
+          fs.renameSync(srcPath, destPath)
+        }
+      }
+
+      // Clean up the nested directory
+      fs.rmSync(possibleNestedDir, { recursive: true, force: true })
     }
 
     // Verify the structure
@@ -312,9 +323,6 @@ export async function installSdk(
 
     // Set executable permissions
     await setExecutablePermissions(commandLineToolsDir)
-
-    // Clean up temp directory
-    fs.rmSync(tempExtractDir, { recursive: true, force: true })
 
     core.info(`SDK installed successfully at ${commandLineToolsDir}`)
     return commandLineToolsDir
@@ -326,21 +334,29 @@ export async function installSdk(
 }
 
 /**
- * Recursively copy directory
+ * Move directory while preserving symlinks
  */
-function copyDirSync(src: string, dest: string): void {
-  fs.mkdirSync(dest, { recursive: true })
+function moveDir(src: string, dest: string): void {
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true })
+  }
+
   const files = fs.readdirSync(src)
 
   for (const file of files) {
     const srcPath = path.join(src, file)
     const destPath = path.join(dest, file)
-    const stat = fs.statSync(srcPath)
+    const stat = fs.lstatSync(srcPath)
 
-    if (stat.isDirectory()) {
-      copyDirSync(srcPath, destPath)
+    if (stat.isSymbolicLink()) {
+      // Handle symlinks
+      const linkTarget = fs.readlinkSync(srcPath)
+      fs.symlinkSync(linkTarget, destPath)
+      fs.unlinkSync(srcPath)
+    } else if (stat.isDirectory()) {
+      moveDir(srcPath, destPath)
     } else {
-      fs.copyFileSync(srcPath, destPath)
+      fs.renameSync(srcPath, destPath)
     }
   }
 }
