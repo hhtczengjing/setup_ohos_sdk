@@ -291,6 +291,10 @@ export async function installSdk(
     core.info('Extracting SDK package...')
     const extractedPath = await extractPackage(downloadPath, platform, finalDir)
 
+    // Check what was actually extracted
+    const extractedContents = fs.readdirSync(extractedPath)
+    core.info(`Extracted contents: ${extractedContents.join(', ')}`)
+
     // Handle nested extraction (if zip contains a "command-line-tools" folder)
     // When unzip extracts to finalDir, if ZIP has nested structure like:
     // command-line-tools/sdk/... then we need to move it up one level
@@ -306,6 +310,12 @@ export async function installSdk(
       // Rename the nested directory to the final location
       // This preserves all symlinks since we're just renaming
       fs.renameSync(possibleNestedDir, commandLineToolsDir)
+    } else if (!fs.existsSync(commandLineToolsDir)) {
+      // If there's no nested directory, the extraction should already have
+      // created the command-line-tools directory structure in the right place
+      // This shouldn't happen, so log a warning
+      core.warning(`No command-line-tools directory found at ${commandLineToolsDir}`)
+      core.warning(`Available directories: ${extractedContents.join(', ')}`)
     }
 
     // Verify the structure
