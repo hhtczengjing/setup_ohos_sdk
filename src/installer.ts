@@ -110,10 +110,12 @@ export async function downloadPackage(
   const packageName = path.basename(downloadInfo.url)
 
   core.info(`Downloading ${packageName}...`)
+  core.debug(`Download URL: ${downloadInfo.url}`)
 
   let lastError: Error | undefined
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
+      core.info(`Download attempt ${attempt}/${retries}`)
       const downloadPath = await tc.downloadTool(downloadInfo.url)
       core.info(`Downloaded to: ${downloadPath}`)
       return {
@@ -126,8 +128,10 @@ export async function downloadPackage(
         core.warning(
           `Download attempt ${attempt} failed: ${lastError.message}. Retrying...`
         )
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        // Wait before retrying (increase wait time for later attempts)
+        const waitTime = 2000 * attempt
+        core.info(`Waiting ${waitTime}ms before retry...`)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
       }
     }
   }

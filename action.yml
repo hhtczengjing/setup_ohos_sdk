@@ -1,6 +1,6 @@
 name: 'Setup HarmonyOS Next SDK'
 description: 'Set up HarmonyOS Next command-line tools with version management'
-author: 'Your Organization'
+author: 'hhtczengjing'
 
 inputs:
   version:
