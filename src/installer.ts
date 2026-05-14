@@ -26,14 +26,20 @@ export async function getDownloadUrl(
   repo: string
 ): Promise<PlatformDownloadInfo> {
   const manifest = await getVersionManifestData(version, owner, repo)
-  let platformInfo = manifest.platforms[platform]
+
+  // Map internal platform names to manifest platform names
+  // Manifest uses: windows-x64, linux-x64, mac-x64, mac-arm64
+  // Internal uses: windows-x64, linux-x64, linux-x86, macos-x64, macos-x86, macos-arm64
+  const manifestPlatformName = getManifestPlatformName(platform)
+
+  let platformInfo = manifest.platforms[manifestPlatformName as keyof typeof manifest.platforms]
 
   // Fallback to compatible platform if not found
   if (!platformInfo) {
-    const fallback = getFallbackPlatform(platform)
+    const fallback = getFallbackManifestPlatform(platform)
     if (fallback) {
       core.info(`Platform ${platform} not found, falling back to ${fallback}`)
-      platformInfo = manifest.platforms[fallback]
+      platformInfo = manifest.platforms[fallback as keyof typeof manifest.platforms]
     }
   }
 
@@ -48,15 +54,35 @@ export async function getDownloadUrl(
 }
 
 /**
- * Get fallback platform for compatibility
- * e.g., linux-x64 -> linux-x86, macos-x64 -> macos-x86
+ * Map internal platform name to manifest platform name
  */
-function getFallbackPlatform(platform: Platform): Platform | null {
-  const fallbackMap: Record<string, Platform> = {
-    'linux-x64': 'linux-x86',
-    'macos-x64': 'macos-x86'
+function getManifestPlatformName(platform: Platform): string {
+  const platformMap: Record<Platform, string> = {
+    'windows-x64': 'windows-x64',
+    'linux-x64': 'linux-x64',
+    'linux-x86': 'linux-x64',  // Fallback to linux-x64
+    'macos-x64': 'mac-x64',
+    'macos-x86': 'mac-x64',    // Fallback to mac-x64
+    'macos-arm64': 'mac-arm64'
   }
-  return fallbackMap[platform] || null
+  return platformMap[platform]
+}
+
+/**
+ * Get fallback manifest platform for compatibility
+ */
+function getFallbackManifestPlatform(platform: Platform): string | null {
+  // If primary mapping didn't work, try alternatives
+  const fallbackMap: Record<Platform, string> = {
+    'windows-x64': '',  // No fallback for Windows
+    'linux-x64': 'linux-x64',
+    'linux-x86': 'linux-x64',
+    'macos-x64': 'mac-x64',
+    'macos-x86': 'mac-x64',
+    'macos-arm64': 'mac-arm64'
+  }
+  const fallback = fallbackMap[platform]
+  return fallback || null
 }
 
 /**

@@ -123,7 +123,7 @@ describe('Installer - Platform Fallback Compatibility', () => {
   })
 
   it('should fall back from linux-x64 to linux-x86 when platform not found', async () => {
-    // Mock manifest with only linux-x86 (no linux-x64)
+    // Mock manifest with only linux-x64 (both x64 and x86 map to the same)
     getVersionManifestData.mockResolvedValue({
       buildVersion: '5.0.0.100',
       platforms: {
@@ -131,32 +131,30 @@ describe('Installer - Platform Fallback Compatibility', () => {
           downloadUrl: 'https://example.com/windows-x64.zip',
           packageName: 'commandline-tools-windows-x64-5.0.0.100.zip'
         },
-        'linux-x86': {
-          downloadUrl: 'https://example.com/linux-x86.zip',
-          packageName: 'commandline-tools-linux-x86-5.0.0.100.zip',
+        'linux-x64': {
+          downloadUrl: 'https://example.com/linux-x64.zip',
+          packageName: 'commandline-tools-linux-x64-5.0.0.100.zip',
           sha256: 'abc123'
         },
-        'macos-x86': {
-          downloadUrl: 'https://example.com/macos-x86.zip',
-          packageName: 'commandline-tools-macos-x86-5.0.0.100.zip'
+        'mac-x64': {
+          downloadUrl: 'https://example.com/mac-x64.zip',
+          packageName: 'commandline-tools-mac-x64-5.0.0.100.zip'
         },
-        'macos-arm64': {
-          downloadUrl: 'https://example.com/macos-arm64.zip',
-          packageName: 'commandline-tools-macos-arm64-5.0.0.100.zip'
+        'mac-arm64': {
+          downloadUrl: 'https://example.com/mac-arm64.zip',
+          packageName: 'commandline-tools-mac-arm64-5.0.0.100.zip'
         }
       }
     })
 
     const result = await getDownloadUrl('5.0.0.100', 'linux-x64', 'owner', 'repo')
 
-    expect(result.url).toBe('https://example.com/linux-x86.zip')
+    expect(result.url).toBe('https://example.com/linux-x64.zip')
     expect(result.checksum).toBe('abc123')
-    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('linux-x64'))
-    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('linux-x86'))
   })
 
   it('should fall back from macos-x64 to macos-x86 when platform not found', async () => {
-    // Mock manifest with only macos-x86 (no macos-x64)
+    // Mock manifest with only mac-x64 (both macos-x64 and macos-x86 map to it)
     getVersionManifestData.mockResolvedValue({
       buildVersion: '5.0.0.100',
       platforms: {
@@ -164,32 +162,30 @@ describe('Installer - Platform Fallback Compatibility', () => {
           downloadUrl: 'https://example.com/windows-x64.zip',
           packageName: 'commandline-tools-windows-x64-5.0.0.100.zip'
         },
-        'linux-x86': {
-          downloadUrl: 'https://example.com/linux-x86.zip',
-          packageName: 'commandline-tools-linux-x86-5.0.0.100.zip'
+        'linux-x64': {
+          downloadUrl: 'https://example.com/linux-x64.zip',
+          packageName: 'commandline-tools-linux-x64-5.0.0.100.zip'
         },
-        'macos-x86': {
-          downloadUrl: 'https://example.com/macos-x86.zip',
-          packageName: 'commandline-tools-macos-x86-5.0.0.100.zip',
+        'mac-x64': {
+          downloadUrl: 'https://example.com/mac-x64.zip',
+          packageName: 'commandline-tools-mac-x64-5.0.0.100.zip',
           sha256: 'def456'
         },
-        'macos-arm64': {
-          downloadUrl: 'https://example.com/macos-arm64.zip',
-          packageName: 'commandline-tools-macos-arm64-5.0.0.100.zip'
+        'mac-arm64': {
+          downloadUrl: 'https://example.com/mac-arm64.zip',
+          packageName: 'commandline-tools-mac-arm64-5.0.0.100.zip'
         }
       }
     })
 
     const result = await getDownloadUrl('5.0.0.100', 'macos-x64', 'owner', 'repo')
 
-    expect(result.url).toBe('https://example.com/macos-x86.zip')
+    expect(result.url).toBe('https://example.com/mac-x64.zip')
     expect(result.checksum).toBe('def456')
-    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('macos-x64'))
-    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('macos-x86'))
   })
 
   it('should throw error when platform not found and no fallback available', async () => {
-    // Mock manifest without linux-x64 or linux-x86
+    // Mock manifest without linux
     getVersionManifestData.mockResolvedValue({
       buildVersion: '5.0.0.100',
       platforms: {
@@ -197,13 +193,13 @@ describe('Installer - Platform Fallback Compatibility', () => {
           downloadUrl: 'https://example.com/windows-x64.zip',
           packageName: 'commandline-tools-windows-x64-5.0.0.100.zip'
         },
-        'macos-x86': {
-          downloadUrl: 'https://example.com/macos-x86.zip',
-          packageName: 'commandline-tools-macos-x86-5.0.0.100.zip'
+        'mac-x64': {
+          downloadUrl: 'https://example.com/mac-x64.zip',
+          packageName: 'commandline-tools-mac-x64-5.0.0.100.zip'
         },
-        'macos-arm64': {
-          downloadUrl: 'https://example.com/macos-arm64.zip',
-          packageName: 'commandline-tools-macos-arm64-5.0.0.100.zip'
+        'mac-arm64': {
+          downloadUrl: 'https://example.com/mac-arm64.zip',
+          packageName: 'commandline-tools-mac-arm64-5.0.0.100.zip'
         }
       }
     })
@@ -227,17 +223,13 @@ describe('Installer - Platform Fallback Compatibility', () => {
           packageName: 'commandline-tools-linux-x64-5.0.0.100.zip',
           sha256: 'xyz789'
         },
-        'linux-x86': {
-          downloadUrl: 'https://example.com/linux-x86.zip',
-          packageName: 'commandline-tools-linux-x86-5.0.0.100.zip'
+        'mac-x64': {
+          downloadUrl: 'https://example.com/mac-x64.zip',
+          packageName: 'commandline-tools-mac-x64-5.0.0.100.zip'
         },
-        'macos-x86': {
-          downloadUrl: 'https://example.com/macos-x86.zip',
-          packageName: 'commandline-tools-macos-x86-5.0.0.100.zip'
-        },
-        'macos-arm64': {
-          downloadUrl: 'https://example.com/macos-arm64.zip',
-          packageName: 'commandline-tools-macos-arm64-5.0.0.100.zip'
+        'mac-arm64': {
+          downloadUrl: 'https://example.com/mac-arm64.zip',
+          packageName: 'commandline-tools-mac-arm64-5.0.0.100.zip'
         }
       }
     })

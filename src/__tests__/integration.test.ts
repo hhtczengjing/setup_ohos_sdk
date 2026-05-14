@@ -26,13 +26,13 @@ describe('Integration - Manifest and Version', () => {
             downloadUrl: 'https://example.com/commandline-tools-linux-x64-6.1.1.268.zip',
             packageName: 'commandline-tools-linux-x64-6.1.1.268.zip'
           },
-          'macos-x64': {
-            downloadUrl: 'https://example.com/commandline-tools-macos-x64-6.1.1.268.zip',
-            packageName: 'commandline-tools-macos-x64-6.1.1.268.zip'
+          'mac-x64': {
+            downloadUrl: 'https://example.com/commandline-tools-mac-x64-6.1.1.268.zip',
+            packageName: 'commandline-tools-mac-x64-6.1.1.268.zip'
           },
-          'macos-arm64': {
-            downloadUrl: 'https://example.com/commandline-tools-macos-arm64-6.1.1.268.zip',
-            packageName: 'commandline-tools-macos-arm64-6.1.1.268.zip'
+          'mac-arm64': {
+            downloadUrl: 'https://example.com/commandline-tools-mac-arm64-6.1.1.268.zip',
+            packageName: 'commandline-tools-mac-arm64-6.1.1.268.zip'
           }
         }
       }
