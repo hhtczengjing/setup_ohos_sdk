@@ -16,10 +16,7 @@ export interface PlatformInfo {
 export interface VersionManifest {
   buildVersion: string
   platforms: {
-    'windows-x64': PlatformInfo
-    'linux-x64': PlatformInfo
-    'mac-x64'?: PlatformInfo
-    'mac-arm64'?: PlatformInfo
+    [key: string]: PlatformInfo
   }
 }
 
