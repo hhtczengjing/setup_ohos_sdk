@@ -4,8 +4,9 @@
   "description": "GitHub Action to set up HarmonyOS Next SDK (command-line tools)",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc && mkdir -p dist && cp -r lib/* dist/ && npm run bundle-deps",
-    "bundle-deps": "rm -rf dist/node_modules && cp -r node_modules dist/",
+    "build": "tsc",
+    "package": "ncc build dist/main.js -o dist-ncc",
+    "prepare": "npm run build && npm run package",
     "test": "jest",
     "lint": "eslint src/**/*.ts"
   },
