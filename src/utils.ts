@@ -1,4 +1,5 @@
 import * as os from 'os'
+import * as path from 'path'
 
 export type Platform = 'windows-x64' | 'linux-x64' | 'linux-x86' | 'macos-x64' | 'macos-x86' | 'macos-arm64'
 
@@ -40,33 +41,33 @@ export function getPlatform(): Platform {
  * Get the base installation directory
  */
 export function getInstallBaseDir(): string {
-  return `${os.homedir()}/ohos`
+  return path.join(os.homedir(), 'ohos')
 }
 
 /**
  * Get the command-line tools directory
  */
 export function getCommandLineToolsDir(version: string): string {
-  return `${getInstallBaseDir()}/${version}/command-line-tools`
+  return path.join(getInstallBaseDir(), version, 'command-line-tools')
 }
 
 /**
  * Get the HOS_SDK_HOME directory
  */
 export function getHosSdkHome(version: string): string {
-  return `${getCommandLineToolsDir(version)}/sdk`
+  return path.join(getCommandLineToolsDir(version), 'sdk')
 }
 
 /**
  * Get the HDC tools directory
  */
 export function getHdcHome(version: string): string {
-  return `${getHosSdkHome(version)}/default/openharmony/toolchains`
+  return path.join(getHosSdkHome(version), 'default', 'openharmony', 'toolchains')
 }
 
 /**
  * Get the NODE_HOME directory (internal use)
  */
 export function getNodeHome(version: string): string {
-  return `${getCommandLineToolsDir(version)}/tool/node`
+  return path.join(getCommandLineToolsDir(version), 'tool', 'node')
 }
