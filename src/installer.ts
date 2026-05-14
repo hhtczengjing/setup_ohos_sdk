@@ -301,11 +301,18 @@ export async function installSdk(
     // On Windows: tc.extractZip() might return the command-line-tools directory directly
     // On Linux/macOS: unzip might extract to a parent directory with command-line-tools inside
 
+    // Normalize paths for comparison (handle Windows path separator differences)
+    const normalizeForComparison = (p: string) => path.resolve(p).toLowerCase()
+    const normalizedExtractedPath = normalizeForComparison(extractedPath)
+    const normalizedCommandLineToolsDir = normalizeForComparison(commandLineToolsDir)
+
     const possibleNestedDir = path.join(extractedPath, 'command-line-tools')
+    const normalizedPossibleNestedDir = normalizeForComparison(possibleNestedDir)
+
     const isNestedStructure =
       fs.existsSync(possibleNestedDir) &&
-      possibleNestedDir !== commandLineToolsDir &&
-      extractedPath !== commandLineToolsDir
+      normalizedPossibleNestedDir !== normalizedCommandLineToolsDir &&
+      normalizedExtractedPath !== normalizedCommandLineToolsDir
 
     if (isNestedStructure) {
       // Case 1: Nested structure - need to flatten
@@ -318,7 +325,7 @@ export async function installSdk(
 
       // Rename the nested directory to the final location
       fs.renameSync(possibleNestedDir, commandLineToolsDir)
-    } else if (extractedPath !== commandLineToolsDir && fs.existsSync(extractedPath)) {
+    } else if (normalizedExtractedPath !== normalizedCommandLineToolsDir && fs.existsSync(extractedPath)) {
       // Case 2: Extracted to a parent directory, but no nested command-line-tools found
       // This might be the direct structure - verify that required directories exist
       core.info('Verifying extraction result...')
@@ -327,7 +334,7 @@ export async function installSdk(
         core.info(`Using extracted path as command-line-tools directory`)
         // The verification step will check if this is valid
       }
-    } else if (extractedPath === commandLineToolsDir) {
+    } else if (normalizedExtractedPath === normalizedCommandLineToolsDir) {
       // Case 3: Already at the correct location (likely Windows with tc.extractZip)
       core.info('SDK extracted directly to final location')
     } else {
