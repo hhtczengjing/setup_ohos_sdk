@@ -32,16 +32,7 @@ export async function getDownloadUrl(
   // Internal uses: windows-x64, linux-x64, linux-x86, macos-x64, macos-x86, macos-arm64
   const manifestPlatformName = getManifestPlatformName(platform)
 
-  let platformInfo = manifest.platforms[manifestPlatformName as keyof typeof manifest.platforms]
-
-  // Fallback to compatible platform if not found
-  if (!platformInfo) {
-    const fallback = getFallbackManifestPlatform(platform)
-    if (fallback) {
-      core.info(`Platform ${platform} not found, falling back to ${fallback}`)
-      platformInfo = manifest.platforms[fallback as keyof typeof manifest.platforms]
-    }
-  }
+  const platformInfo = manifest.platforms[manifestPlatformName]
 
   if (!platformInfo) {
     throw new Error(`Platform ${platform} not found in version manifest for ${version}`)
@@ -71,23 +62,6 @@ function getManifestPlatformName(platform: Platform): string {
 /**
  * Get fallback manifest platform for compatibility
  */
-function getFallbackManifestPlatform(platform: Platform): string | null {
-  // Provide alternative platform names to try
-  // Maps internal platform -> [primary, fallback1, fallback2, ...]
-  const fallbackMap: Record<Platform, string[]> = {
-    'windows-x64': ['windows-x64'],  // No fallback for Windows
-    'linux-x64': ['linux-x64', 'linux-x86'],  // Try linux-x86 if linux-x64 fails
-    'linux-x86': ['linux-x64', 'linux-x86'],  // Try both, prefer linux-x64
-    'macos-x64': ['mac-x64', 'mac-arm64'],    // Try mac-arm64 if mac-x64 fails
-    'macos-x86': ['mac-x64', 'mac-arm64'],    // Try both, prefer mac-x64
-    'macos-arm64': ['mac-arm64', 'mac-x64']   // Try mac-x64 if mac-arm64 fails
-  }
-
-  const alternatives = fallbackMap[platform]
-  // Return alternatives after the primary (which was already tried)
-  return alternatives.length > 1 ? alternatives[1] : null
-}
-
 /**
  * Download result with path and checksum
  */
