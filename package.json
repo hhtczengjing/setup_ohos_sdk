@@ -2,7 +2,7 @@
   "name": "setup-ohos-sdk",
   "version": "1.0.0",
   "description": "GitHub Action to set up HarmonyOS Next SDK (command-line tools)",
-  "main": "dist/index.js",
+  "main": "dist-ncc/index.js",
   "scripts": {
     "build": "tsc",
     "package": "ncc build dist/main.js -o dist-ncc",
